@@ -421,7 +421,7 @@ const dayjs = require('dayjs');
 const AdminDashboard = () => {
  const [orders, setOrders] = useState([]);
  const [orderCounts, setOrderCounts] = useState([]);
- const [error, setError] = useState(null);
+ const [setError] = useState(null);
  const [selectedTable, setSelectedTable] = useState(1);
  const [orderDelivered, setOrderDelivered] = useState({});
  const [activeTab, setActiveTab] = useState('all');
