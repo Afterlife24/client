@@ -421,7 +421,7 @@ const dayjs = require('dayjs');
 const AdminDashboard = () => {
  const [orders, setOrders] = useState([]);
  const [orderCounts, setOrderCounts] = useState([]);
- const [setError] = useState(null);
+//  const [error, setError] = useState(null);
  const [selectedTable, setSelectedTable] = useState(1);
  const [orderDelivered, setOrderDelivered] = useState({});
  const [activeTab, setActiveTab] = useState('all');
@@ -486,8 +486,6 @@ useEffect(() => {
  deliveredStatus[order.id] = order.isDelivered;
  });
  setOrderDelivered(deliveredStatus);
- }, (error) => {
- setError(error.message);
  });
 
  return () => unsubscribe();
