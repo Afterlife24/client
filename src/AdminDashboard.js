@@ -491,7 +491,7 @@ useEffect(() => {
  });
 
  return () => unsubscribe();
-}, [timeRange]); // Removed tapCollectTokenMap to avoid unnecessary re-renders
+}, [timeRange,tapCollectTokenMap]); // Removed tapCollectTokenMap to avoid unnecessary re-renders
 
 
 // Moved sendTokenIdToServer function outside of the onSnapshot handler
