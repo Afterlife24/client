@@ -27,28 +27,17 @@ const { getFirestore } = require('firebase/firestore');
 
 // secondproductionchange
 
-// const firebaseConfig = {
-//   apiKey: "AIzaSyD6l1wSl0Wzf2v1FBlPskOYEthSRFAKp58",
-//   authDomain: "scanme-372e3.firebaseapp.com",
-//   databaseURL: "https://scanme-372e3-default-rtdb.firebaseio.com",
-//   projectId: "scanme-372e3",
-//   storageBucket: "scanme-372e3.appspot.com",
-//   messagingSenderId: "948074886578",
-//   appId: "1:948074886578:web:80a62ba4fb8f3d24a3a0ab",
-//   measurementId: "G-HBMXG6WXR0"
-// };
+const firebaseConfig = {
+  apiKey: "AIzaSyD6l1wSl0Wzf2v1FBlPskOYEthSRFAKp58",
+  authDomain: "scanme-372e3.firebaseapp.com",
+  databaseURL: "https://scanme-372e3-default-rtdb.firebaseio.com",
+  projectId: "scanme-372e3",
+  storageBucket: "scanme-372e3.appspot.com",
+  messagingSenderId: "948074886578",
+  appId: "1:948074886578:web:80a62ba4fb8f3d24a3a0ab",
+  measurementId: "G-HBMXG6WXR0"
+};
 
-
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAdPjzBE2EjsCaTP5aBQ9w1-_TKL2zttw8",
-    authDomain: "tapandcollect-abe43.firebaseapp.com",
-    projectId: "tapandcollect-abe43",
-    storageBucket: "tapandcollect-abe43.appspot.com",
-    messagingSenderId: "835659748911",
-    appId: "1:835659748911:web:effae864ee493a85b798da",
-    measurementId: "G-DE5GCGGHRJ"
-  };
   
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
