@@ -41,26 +41,34 @@ const { getFirestore } = require('firebase/firestore');
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 const firebaseConfig = {
-    apiKey: "AIzaSyAdPjzBE2EjsCaTP5aBQ9w1-_TKL2zttw8",
-    authDomain: "tapandcollect-abe43.firebaseapp.com",
-    projectId: "tapandcollect-abe43",
-    storageBucket: "tapandcollect-abe43.appspot.com",
-    messagingSenderId: "835659748911",
-    appId: "1:835659748911:web:effae864ee493a85b798da",
-    measurementId: "G-DE5GCGGHRJ"
+    apiKey: "AIzaSyA0O0zrpTGxpFpKOuEXLyw5-UW7VNZEW5E",
+    authDomain: "scanmetest-e2908.firebaseapp.com",
+    projectId: "scanmetest-e2908",
+    storageBucket: "scanmetest-e2908.appspot.com",
+    messagingSenderId: "468650400405",
+    appId: "1:468650400405:web:7ed8c876eaf8793785d99c",
+    measurementId: "G-S8M59Z2NB7"
   };
+
+
+
+
+
+
+
+
+
+
+// const firebaseConfig = {
+//     apiKey: "AIzaSyAdPjzBE2EjsCaTP5aBQ9w1-_TKL2zttw8",
+//     authDomain: "tapandcollect-abe43.firebaseapp.com",
+//     projectId: "tapandcollect-abe43",
+//     storageBucket: "tapandcollect-abe43.appspot.com",
+//     messagingSenderId: "835659748911",
+//     appId: "1:835659748911:web:effae864ee493a85b798da",
+//     measurementId: "G-DE5GCGGHRJ"
+//   };
 
   
   const app = initializeApp(firebaseConfig);
