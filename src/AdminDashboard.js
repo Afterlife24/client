@@ -513,24 +513,23 @@ const handleBoxClick = (tableNumber) => {
 
 
 const handleOrderDelivered = async (orderId) => {
-  try {
-    await fetch(`${process.env.REACT_APP_API_URL}/markAsDelivered`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ orderId }),
-    });
+ try {
+ await fetch('https://server-server.gofastapi.com/markAsDelivered', {
+ 
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify({ orderId }),
+ });
 
-    setOrderDelivered(prev => ({
-      ...prev,
-      [orderId]: true,
-    }));
-  } catch (error) {
-    console.error('Error marking order as delivered:', error);
-  }
-};
-
+ setOrderDelivered(prev => ({
+ ...prev,
+ [orderId]: true,
+ }));
+ } catch (error) {
+ console.error('Error marking order as delivered:', error);
+ }
 };
 
 const getOrderDetails = (tableNumber) => {
