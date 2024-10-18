@@ -1324,8 +1324,6 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [timeRange, setTimeRange] = useState('1day');
   const [tapCollectTokenMap, setTapCollectTokenMap] = useState({});
-  const [pendingOrdersCount, setPendingOrdersCount] = useState(0); // To track pending orders
-  const [tapCollectPendingCount, setTapCollectPendingCount] = useState(0); // To track tap and collect pending orders
 
   useEffect(() => {
     const getOrdersQuery = () => {
@@ -1354,7 +1352,7 @@ const AdminDashboard = () => {
     };
 
     const unsubscribe = onSnapshot(getOrdersQuery(), (snapshot) => {
-      const ordersList = snapshot.docs.map((doc) => {
+      const ordersList = snapshot.docs.map(doc => {
         const data = doc.data();
         return { id: doc.id, ...data, createdAt: data.createdAt.toDate() };
       });
@@ -1362,49 +1360,35 @@ const AdminDashboard = () => {
 
       setOrders(ordersList);
 
-      // Update Tap and Collect tokens
       const newTapCollectTokens = {};
-      ordersList.forEach((order) => {
+      ordersList.forEach(order => {
         if (!tapCollectTokenMap[order.id] && order.tableNumber === 0) {
-          const tokenId = order.tokenId; // Use tokenId from the order
+          const tokenId = order.tokenId;
           newTapCollectTokens[order.id] = tokenId;
         }
       });
 
-      setTapCollectTokenMap((prev) => ({ ...prev, ...newTapCollectTokens }));
+      setTapCollectTokenMap(prev => ({ ...prev, ...newTapCollectTokens }));
 
-      // Update delivery status for orders
       const deliveredStatus = {};
-      ordersList.forEach((order) => {
+      ordersList.forEach(order => {
         deliveredStatus[order.id] = order.isDelivered;
       });
       setOrderDelivered(deliveredStatus);
-
-      // Count pending orders and tap and collect orders
-      const pendingCount = ordersList.filter((order) => !order.isDelivered).length;
-      const tapCollectCount = ordersList.filter(
-        (order) => order.tableNumber === 0 && !order.isDelivered
-      ).length;
-
-      setPendingOrdersCount(pendingCount);
-      setTapCollectPendingCount(tapCollectCount);
     });
 
     return () => unsubscribe();
   }, [timeRange, tapCollectTokenMap]);
 
-  useEffect(() => {
-    const orderCountMap = {};
-    orders.forEach((order) => {
-      const date = order.createdAt.toLocaleDateString();
-      orderCountMap[date] = (orderCountMap[date] || 0) + 1;
-    });
-    const counts = Object.entries(orderCountMap).map(([date, count]) => ({
-      date,
-      count,
-    }));
-    setOrderCounts(counts);
-  }, [orders]);
+  // Get count of pending orders for Tap and Collect
+  const getTapAndCollectPendingCount = () => {
+    return orders.filter(order => order.tableNumber === 0 && !orderDelivered[order.id]).length;
+  };
+
+  // Get count of pending orders for all tables except Tap and Collect
+  const getPendingOrdersCount = () => {
+    return orders.filter(order => order.tableNumber !== 0 && !orderDelivered[order.id]).length;
+  };
 
   const handleBoxClick = (tableNumber) => {
     setSelectedTable(tableNumber);
@@ -1420,7 +1404,7 @@ const AdminDashboard = () => {
         body: JSON.stringify({ orderId }),
       });
 
-      setOrderDelivered((prev) => ({
+      setOrderDelivered(prev => ({
         ...prev,
         [orderId]: true,
       }));
@@ -1430,11 +1414,7 @@ const AdminDashboard = () => {
   };
 
   const getOrderDetails = (tableNumber) => {
-    return orders.filter(
-      (order) =>
-        order.tableNumber === tableNumber &&
-        (activeTab === 'all' || (activeTab === 'pending' && !order.isDelivered))
-    );
+    return orders.filter(order => order.tableNumber === tableNumber && (activeTab === 'all' || (activeTab === 'pending' && !order.isDelivered)));
   };
 
   const getOrderColor = (orderId) => {
@@ -1443,7 +1423,7 @@ const AdminDashboard = () => {
 
   const isTableAllDelivered = (tableNumber) => {
     const tableOrders = getOrderDetails(tableNumber);
-    return tableOrders.every((order) => orderDelivered[order.id]);
+    return tableOrders.every(order => orderDelivered[order.id]);
   };
 
   const handleTabClick = (tab) => {
@@ -1456,7 +1436,7 @@ const AdminDashboard = () => {
   };
 
   const getTapAndCollectOrders = () => {
-    return orders.filter((order) => order.tableNumber === 0);
+    return orders.filter(order => order.tableNumber === 0);
   };
 
   return (
@@ -1465,68 +1445,50 @@ const AdminDashboard = () => {
         <h1 style={styles.header}>Menu</h1>
         <ul style={styles.menuList}>
           <li
-            style={{
-              ...styles.menuItem,
-              backgroundColor: activeTab === 'all' ? 'white' : '#444',
-              color: activeTab === 'all' ? 'black' : 'white',
-            }}
+            style={{ ...styles.menuItem, backgroundColor: activeTab === 'all' ? 'white' : '#444', color: activeTab === 'all' ? 'black' : 'white' }}
             onClick={() => handleTabClick('all')}
           >
             All Orders
           </li>
           <li
-            style={{
-              ...styles.menuItem,
-              backgroundColor: activeTab === 'pending' ? 'white' : '#444',
-              color: activeTab === 'pending' ? 'black' : 'white',
-            }}
+            style={{ ...styles.menuItem, backgroundColor: activeTab === 'pending' ? 'white' : '#444', color: activeTab === 'pending' ? 'black' : 'white' }}
             onClick={() => handleTabClick('pending')}
           >
             Pending Orders
-            {pendingOrdersCount > 0 && (
-              <span style={styles.badge}>{pendingOrdersCount}</span>
+            {getPendingOrdersCount() > 0 && (
+              <span style={styles.badge}>{getPendingOrdersCount()}</span>
             )}
           </li>
           <li
-            style={{
-              ...styles.menuItem,
-              backgroundColor: activeTab === 'charts' ? 'white' : '#444',
-              color: activeTab === 'charts' ? 'black' : 'white',
-            }}
+            style={{ ...styles.menuItem, backgroundColor: activeTab === 'charts' ? 'white' : '#444', color: activeTab === 'charts' ? 'black' : 'white' }}
             onClick={() => handleTabClick('charts')}
           >
             Order Count
           </li>
           <li
-            style={{
-              ...styles.menuItem,
-              backgroundColor: activeTab === 'tapAndCollect' ? 'white' : '#444',
-              color: activeTab === 'tapAndCollect' ? 'black' : 'white',
-            }}
+            style={{ ...styles.menuItem, backgroundColor: activeTab === 'tapAndCollect' ? 'white' : '#444', color: activeTab === 'tapAndCollect' ? 'black' : 'white' }}
             onClick={() => handleTabClick('tapAndCollect')}
           >
             Tap and Collect
-            {tapCollectPendingCount > 0 && (
-              <span style={styles.badge}>{tapCollectPendingCount}</span>
+            {getTapAndCollectPendingCount() > 0 && (
+              <span style={styles.badge}>{getTapAndCollectPendingCount()}</span>
             )}
           </li>
         </ul>
       </div>
+
       <div style={styles.tablesSection}>
         {activeTab !== 'tapAndCollect' && (
           <>
             <h1 style={styles.header}>Tables</h1>
             <div style={styles.grid}>
-              {Array.from({ length: 10 }, (_, i) => i + 1).map((tableNumber) => (
+              {Array.from({ length: 10 }, (_, i) => i + 1).map(tableNumber => (
                 <div
                   key={tableNumber}
                   onClick={() => handleBoxClick(tableNumber)}
                   style={{
                     ...styles.tableBox,
-                    backgroundColor:
-                      getOrderDetails(tableNumber).length && !isTableAllDelivered(tableNumber)
-                        ? '#FF6347'
-                        : '#90EE90',
+                    backgroundColor: getOrderDetails(tableNumber).length && !isTableAllDelivered(tableNumber) ? '#FF6347' : '#90EE90'
                   }}
                 >
                   Table {tableNumber}
@@ -1536,21 +1498,14 @@ const AdminDashboard = () => {
           </>
         )}
       </div>
+
       <div style={styles.ordersSection}>
         <div style={styles.ordersContainer}>
           <div style={styles.headerContainer}>
             <h1 style={styles.header}>
-              {activeTab === 'charts'
-                ? 'Order Counts'
-                : activeTab === 'tapAndCollect'
-                ? 'Tap and Collect Orders'
-                : `Order Details for Table ${selectedTable}`}
+              {activeTab === 'charts' ? 'Order Counts' : activeTab === 'tapAndCollect' ? 'Tap and Collect Orders' : `Order Details for Table ${selectedTable}`}
             </h1>
-            <select
-              style={styles.dropdown}
-              value={timeRange}
-              onChange={handleTimeRangeChange}
-            >
+            <select style={styles.dropdown} value={timeRange} onChange={handleTimeRangeChange}>
               <option value="1day">Last 1 day</option>
               <option value="3days">Last 3 days</option>
               <option value="1week">Last 1 week</option>
@@ -1566,26 +1521,53 @@ const AdminDashboard = () => {
                   <tr>
                     <th style={styles.tableHeader}>Dish</th>
                     <th style={styles.tableHeader}>Quantity</th>
-                    <th style={styles.tableHeader}>Order ID</th>
-                    <th style={styles.tableHeader}>Mark as Delivered</th>
+                    <th style={styles.tableHeader}>Date</th>
+                    <th style={styles.tableHeader}>Time</th>
+                    <th style={styles.tableHeader}>Status</th>
+                    <th style={styles.tableHeader}></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {getOrderDetails(selectedTable).map((order) => (
-                    <tr key={order.id} style={{ backgroundColor: getOrderColor(order.id) }}>
-                      <td style={styles.tableCell}>{order.dish}</td>
-                      <td style={styles.tableCell}>{order.quantity}</td>
-                      <td style={styles.tableCell}>{order.id}</td>
-                      <td style={styles.tableCell}>
-                        <button
-                          onClick={() => handleOrderDelivered(order.id)}
-                          disabled={orderDelivered[order.id]}
-                        >
-                          Delivered
-                        </button>
+                  {getOrderDetails(selectedTable).length ? (
+                    getOrderDetails(selectedTable).map((order) => (
+                      <tr key={order.id} style={{ backgroundColor: getOrderColor(order.id) }}>
+                        <td style={styles.tableCell}>
+                          <div style={styles.dishContainer}>
+                            {order.dishes.map((dish, index) => (
+                              <div key={index} style={styles.dishBox}>
+                                {dish.name}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={styles.tableCell}>
+                          <div style={styles.dishContainer}>
+                            {order.dishes.map((dish, index) => (
+                              <div key={index} style={styles.dishBox}>
+                                {dish.quantity}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={styles.tableCell}>{dayjs(order.createdAt).format('YYYY-MM-DD')}</td>
+                        <td style={styles.tableCell}>{dayjs(order.createdAt).format('HH:mm')}</td>
+                        <td style={styles.tableCell}>{orderDelivered[order.id] ? 'Delivered' : 'Pending'}</td>
+                        <td style={styles.tableCell}>
+                          {!orderDelivered[order.id] && (
+                            <button style={styles.deliveredButton} onClick={() => handleOrderDelivered(order.id)}>
+                              Mark as Delivered
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" style={styles.tableCell}>
+                        No Orders Available
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1598,51 +1580,46 @@ const AdminDashboard = () => {
                   <tr>
                     <th style={styles.tableHeader}>Dish</th>
                     <th style={styles.tableHeader}>Quantity</th>
-                    <th style={styles.tableHeader}>Token ID</th>
-                    <th style={styles.tableHeader}>Order ID</th>
-                    <th style={styles.tableHeader}>Mark as Delivered</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {getTapAndCollectOrders().map((order) => (
-                    <tr key={order.id} style={{ backgroundColor: getOrderColor(order.id) }}>
-                      <td style={styles.tableCell}>{order.dish}</td>
-                      <td style={styles.tableCell}>{order.quantity}</td>
-                      <td style={styles.tableCell}>{tapCollectTokenMap[order.id]}</td>
-                      <td style={styles.tableCell}>{order.id}</td>
-                      <td style={styles.tableCell}>
-                        <button
-                          onClick={() => handleOrderDelivered(order.id)}
-                          disabled={orderDelivered[order.id]}
-                        >
-                          Delivered
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {activeTab === 'charts' && (
-            <div style={styles.chartsContainer}>
-              <h2 style={styles.header}>Order Counts by Date</h2>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
                     <th style={styles.tableHeader}>Date</th>
-                    <th style={styles.tableHeader}>Number of Orders</th>
+                    <th style={styles.tableHeader}>Time</th>
+                    <th style={styles.tableHeader}>Status</th>
+                    <th style={styles.tableHeader}></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {orderCounts.map((entry) => (
-                    <tr key={entry.date}>
-                      <td style={styles.tableCell}>{entry.date}</td>
-                      <td style={styles.tableCell}>{entry.count}</td>
-                    </tr>
-                  ))}
-                </tbody>
+  {getTapAndCollectOrders().map((order) => (
+    <tr key={order.id} style={{ backgroundColor: getOrderColor(order.id) }}>
+      <td style={styles.tableCell}>
+        <div style={styles.dishContainer}>
+          {order.dishes.map((dish, index) => (
+            <div key={index} style={styles.dishBox}>
+              {dish.name}
+            </div> // <- Closing tag added here
+          ))}
+        </div> {/* Added closing div for dishContainer */}
+      </td>
+      <td style={styles.tableCell}>
+        <div style={styles.dishContainer}>
+          {order.dishes.map((dish, index) => (
+            <div key={index} style={styles.dishBox}>
+              {dish.quantity}
+            </div>
+          ))}
+        </div> {/* Closing div for dishContainer */}
+      </td>
+      <td style={styles.tableCell}>{dayjs(order.createdAt).format('YYYY-MM-DD')}</td>
+      <td style={styles.tableCell}>{dayjs(order.createdAt).format('HH:mm')}</td>
+      <td style={styles.tableCell}>{orderDelivered[order.id] ? 'Delivered' : 'Pending'}</td>
+      <td style={styles.tableCell}>
+        {!orderDelivered[order.id] && (
+          <button style={styles.deliveredButton} onClick={() => handleOrderDelivered(order.id)}>
+            Mark as Delivered
+          </button>
+        )}
+      </td>
+    </tr>
+  ))}
+</tbody>
               </table>
             </div>
           )}
@@ -1652,7 +1629,7 @@ const AdminDashboard = () => {
   );
 };
 
-// Styles
+// Styles for Badge and other elements
 const styles = {
   container: { display: 'flex', height: '100vh' },
   sidebar: { width: '20%', backgroundColor: '#333', color: 'white', padding: '20px' },
@@ -1660,28 +1637,29 @@ const styles = {
   menuList: { listStyleType: 'none', padding: '0' },
   menuItem: { padding: '10px', margin: '5px 0', cursor: 'pointer', textAlign: 'center', borderRadius: '4px', position: 'relative' },
   badge: {
-    backgroundColor: '#FF6347',
+    backgroundColor: 'red',
     borderRadius: '50%',
     color: 'white',
     padding: '5px 10px',
     fontSize: '12px',
     position: 'absolute',
-    top: '50%',
-    right: '-10px',
-    transform: 'translateY(-50%)',
+    right: '10px',
+    top: '10px',
   },
-  tablesSection: { width: '20%', padding: '20px' },
-  ordersSection: { width: '60%', padding: '20px' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' },
-  tableBox: { padding: '20px', textAlign: 'center', cursor: 'pointer', borderRadius: '4px', backgroundColor: '#f0f0f0' },
+  tablesSection: { flex: '1', padding: '20px' },
+  ordersSection: { flex: '3', padding: '20px' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridGap: '10px' },
+  tableBox: { padding: '20px', backgroundColor: '#90EE90', borderRadius: '8px', textAlign: 'center', cursor: 'pointer' },
   ordersContainer: { marginTop: '20px' },
   headerContainer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  dropdown: { padding: '5px', borderRadius: '4px' },
+  dropdown: { fontSize: '16px', padding: '5px' },
   ordersTableContainer: { marginTop: '20px' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  tableHeader: { backgroundColor: '#ddd', padding: '10px' },
-  tableCell: { border: '1px solid #ddd', padding: '10px', textAlign: 'center' },
-  chartsContainer: { marginTop: '20px' },
+  tableHeader: { border: '1px solid #ddd', padding: '8px', backgroundColor: '#f2f2f2' },
+  tableCell: { border: '1px solid #ddd', padding: '8px', textAlign: 'center' },
+  dishContainer: { display: 'flex', flexDirection: 'column' },
+  dishBox: { padding: '5px' },
+  deliveredButton: { padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' },
 };
 
 export default AdminDashboard;
