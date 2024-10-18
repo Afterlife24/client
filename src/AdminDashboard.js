@@ -1587,39 +1587,41 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-  {getTapAndCollectOrders().map((order) => (
-    <tr key={order.id} style={{ backgroundColor: getOrderColor(order.id) }}>
-      <td style={styles.tableCell}>
-        <div style={styles.dishContainer}>
-          {order.dishes.map((dish, index) => (
-            <div key={index} style={styles.dishBox}>
-              {dish.name}
-            </div> // <- Closing tag added here
-          ))}
-        </div> {/* Added closing div for dishContainer */}
-      </td>
-      <td style={styles.tableCell}>
-        <div style={styles.dishContainer}>
-          {order.dishes.map((dish, index) => (
-            <div key={index} style={styles.dishBox}>
-              {dish.quantity}
-            </div>
-          ))}
-        </div> {/* Closing div for dishContainer */}
-      </td>
-      <td style={styles.tableCell}>{dayjs(order.createdAt).format('YYYY-MM-DD')}</td>
-      <td style={styles.tableCell}>{dayjs(order.createdAt).format('HH:mm')}</td>
-      <td style={styles.tableCell}>{orderDelivered[order.id] ? 'Delivered' : 'Pending'}</td>
-      <td style={styles.tableCell}>
-        {!orderDelivered[order.id] && (
-          <button style={styles.deliveredButton} onClick={() => handleOrderDelivered(order.id)}>
-            Mark as Delivered
-          </button>
-        )}
-      </td>
-    </tr>
-  ))}
-</tbody>
+                  {getTapAndCollectOrders().map((order) => (
+                    <tr key={order.id} style={{ backgroundColor: getOrderColor(order.id) }}>
+                      <td style={styles.tableCell}>
+                        <div style={styles.dishContainer}>
+                          {order.dishes.map((dish, index) => (
+                            <div key={index} style={styles.dishBox}>
+                              {dish.name}
+                            </div>
+                            
+                          ))}
+                          </div>
+                      </td>
+                      
+                      <td style={styles.tableCell}>
+                        <div style={styles.dishContainer}>
+                          {order.dishes.map((dish, index) => (
+                            <div key={index} style={styles.dishBox}>
+                              {dish.quantity}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td style={styles.tableCell}>{dayjs(order.createdAt).format('YYYY-MM-DD')}</td>
+                      <td style={styles.tableCell}>{dayjs(order.createdAt).format('HH:mm')}</td>
+                      <td style={styles.tableCell}>{orderDelivered[order.id] ? 'Delivered' : 'Pending'}</td>
+                      <td style={styles.tableCell}>
+                        {!orderDelivered[order.id] && (
+                          <button style={styles.deliveredButton} onClick={() => handleOrderDelivered(order.id)}>
+                            Mark as Delivered
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           )}
