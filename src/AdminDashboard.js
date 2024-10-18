@@ -514,7 +514,7 @@ const handleBoxClick = (tableNumber) => {
 
 const handleOrderDelivered = async (orderId) => {
  try {
- await fetch('https://server2-server2.gofastapi.com/markAsDelivered', {
+ await fetch('https://server-server.gofastapi.com/markAsDelivered', {
  
  method: 'POST',
  headers: {
