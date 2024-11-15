@@ -13,15 +13,10 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [timeRange, setTimeRange] = useState('1day');
   const [tapCollectTokenMap, setTapCollectTokenMap] = useState({});
-  const [newOrderCount, setNewOrderCount] = useState(0);
-  const [pendingOrderCount, setPendingOrderCount] = useState(0);
-  const [tapAndCollectOrderCount, setTapAndCollectOrderCount] = useState(0);
-  const [reservationCount, setReservationCount] = useState(0);
-  const [viewedNotifications, setViewedNotifications] = useState({
-    all: false,
-    pending: false,
-    tapAndCollect: false,
-    reservations: false,
+  const [undeliveredCounts, setUndeliveredCounts] = useState({
+    all: 0,
+    pending: 0,
+    tapAndCollect: 0,
   });
 
   useEffect(() => {
@@ -51,7 +46,7 @@ const AdminDashboard = () => {
     };
 
     const unsubscribe = onSnapshot(getOrdersQuery(), (snapshot) => {
-      const ordersList = snapshot.docs.map(doc => {
+      const ordersList = snapshot.docs.map((doc) => {
         const data = doc.data();
         return { id: doc.id, ...data, createdAt: data.createdAt.toDate() };
       });
@@ -60,70 +55,63 @@ const AdminDashboard = () => {
       setOrders(ordersList);
 
       const newTapCollectTokens = {};
-      ordersList.forEach(order => {
+      ordersList.forEach((order) => {
         if (!tapCollectTokenMap[order.id] && order.tableNumber === 0) {
-          const tokenId = order.tokenId;
+          const tokenId = order.tokenId; // Use tokenId from the order
           newTapCollectTokens[order.id] = tokenId;
-          console.log("tokenId ID is:", tokenId)
         }
       });
 
-      setTapCollectTokenMap(prev => ({ ...prev, ...newTapCollectTokens }));
+      setTapCollectTokenMap((prev) => ({ ...prev, ...newTapCollectTokens }));
 
       const deliveredStatus = {};
-      ordersList.forEach(order => {
+      ordersList.forEach((order) => {
         deliveredStatus[order.id] = order.isDelivered;
       });
       setOrderDelivered(deliveredStatus);
 
-      // Update counts for notifications
-      setNewOrderCount(ordersList.length);
-      setPendingOrderCount(ordersList.filter(order => !order.isDelivered).length);
-      setTapAndCollectOrderCount(ordersList.filter(order => order.tableNumber === 0).length);
+      // Calculate undelivered orders for badges
+      const allUndelivered = ordersList.filter((order) => !order.isDelivered).length;
+      const pendingUndelivered = ordersList.filter(
+        (order) => !order.isDelivered && order.tableNumber !== 0
+      ).length;
+      const tapAndCollectUndelivered = ordersList.filter(
+        (order) => !order.isDelivered && order.tableNumber === 0
+      ).length;
+
+      setUndeliveredCounts({
+        all: allUndelivered,
+        pending: pendingUndelivered,
+        tapAndCollect: tapAndCollectUndelivered,
+      });
     });
-    
+
     return () => unsubscribe();
   }, [timeRange, tapCollectTokenMap]);
 
   useEffect(() => {
-    if (activeTab === 'reservations') {
-      const reservationsRef = collection(db, 'reservations');
-      const unsubscribe = onSnapshot(query(reservationsRef, orderBy('date', 'desc')), (snapshot) => {
-        const reservationsList = snapshot.docs.map(doc => doc.data());
-        setReservations(reservationsList);
-        setReservationCount(reservationsList.length);
-      });
-      return () => unsubscribe();
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
     const orderCountMap = {};
-    orders.forEach(order => {
+    orders.forEach((order) => {
       const date = order.createdAt.toLocaleDateString();
       orderCountMap[date] = (orderCountMap[date] || 0) + 1;
     });
     const counts = Object.entries(orderCountMap).map(([date, count]) => ({
       date,
-      count
+      count,
     }));
     setOrderCounts(counts);
   }, [orders]);
 
   useEffect(() => {
-    if (viewedNotifications.all && activeTab === 'all') {
-      setNewOrderCount(0);
+    if (activeTab === 'reservations') {
+      const reservationsRef = collection(db, 'reservations');
+      const unsubscribe = onSnapshot(query(reservationsRef, orderBy('date', 'desc')), (snapshot) => {
+        const reservationsList = snapshot.docs.map((doc) => doc.data());
+        setReservations(reservationsList);
+      });
+      return () => unsubscribe();
     }
-    if (viewedNotifications.pending && activeTab === 'pending') {
-      setPendingOrderCount(0);
-    }
-    if (viewedNotifications.tapAndCollect && activeTab === 'tapAndCollect') {
-      setTapAndCollectOrderCount(0);
-    }
-    if (viewedNotifications.reservations && activeTab === 'reservations') {
-      setReservationCount(0);
-    }
-  }, [activeTab, viewedNotifications]);
+  }, [activeTab]);
 
   const handleBoxClick = (tableNumber) => {
     setSelectedTable(tableNumber);
@@ -139,7 +127,7 @@ const AdminDashboard = () => {
         body: JSON.stringify({ orderId }),
       });
 
-      setOrderDelivered(prev => ({
+      setOrderDelivered((prev) => ({
         ...prev,
         [orderId]: true,
       }));
@@ -149,30 +137,34 @@ const AdminDashboard = () => {
   };
 
   const getOrderDetails = (tableNumber) => {
-    return orders.filter(order => order.tableNumber === tableNumber && (activeTab === 'all' || (activeTab === 'pending' && !order.isDelivered)));
+    return orders.filter(
+      (order) =>
+        order.tableNumber === tableNumber &&
+        (activeTab === 'all' || (activeTab === 'pending' && !order.isDelivered))
+    );
   };
 
   const getOrderColor = (orderId) => {
     return orderDelivered[orderId] ? '#90EE90' : '#FF6347';
   };
 
-  const isTableAllDelivered = (tableNumber) => {
-    const tableOrders = getOrderDetails(tableNumber);
-    return tableOrders.every(order => orderDelivered[order.id]);
-  };
-
   const handleTabClick = (tab) => {
     setActiveTab(tab);
     setSelectedTable(1);
-    setViewedNotifications((prev) => ({ ...prev, [tab]: true }));
   };
+
+  const isTableAllDelivered = (tableNumber) => {
+  const ordersForTable = orders.filter((order) => order.tableNumber === tableNumber);
+  return ordersForTable.every((order) => order.isDelivered);
+};
+
 
   const handleTimeRangeChange = (event) => {
     setTimeRange(event.target.value);
   };
 
   const getTapAndCollectOrders = () => {
-    return orders.filter(order => order.tableNumber === 0);
+    return orders.filter((order) => order.tableNumber === 0);
   };
 
   return (
@@ -184,64 +176,57 @@ const AdminDashboard = () => {
             style={{
               ...styles.menuItem,
               backgroundColor: activeTab === 'all' ? 'white' : '#444',
-              color: activeTab === 'all' ? 'black' : 'white'
+              color: activeTab === 'all' ? 'black' : 'white',
             }}
             onClick={() => handleTabClick('all')}
           >
-            All Orders {newOrderCount > 0 && !viewedNotifications.all && (
-              <span style={styles.badge}>{newOrderCount}</span>
+            All Orders{' '}
+            {undeliveredCounts.all > 0 && (
+              <span style={styles.badge}>{undeliveredCounts.all}</span>
             )}
           </li>
           <li
             style={{
               ...styles.menuItem,
               backgroundColor: activeTab === 'pending' ? 'white' : '#444',
-              color: activeTab === 'pending' ? 'black' : 'white'
+              color: activeTab === 'pending' ? 'black' : 'white',
             }}
             onClick={() => handleTabClick('pending')}
           >
-            Pending Orders {pendingOrderCount > 0 && !viewedNotifications.pending && (
-              <span style={styles.badge}>{pendingOrderCount}</span>
+            Pending Orders{' '}
+            {undeliveredCounts.pending > 0 && (
+              <span style={styles.badge}>{undeliveredCounts.pending}</span>
             )}
           </li>
           <li
             style={{
               ...styles.menuItem,
-              backgroundColor: activeTab === 'charts' ? 'white' : '#444',
-              color: activeTab === 'charts' ? 'black' : 'white'
-            }}
-            onClick={() => handleTabClick('charts')}
-          >
-            Order Count
-          </li>
-          <li
-            style={{
-              ...styles.menuItem,
               backgroundColor: activeTab === 'tapAndCollect' ? 'white' : '#444',
-              color: activeTab === 'tapAndCollect' ? 'black' : 'white'
+              color: activeTab === 'tapAndCollect' ? 'black' : 'white',
             }}
             onClick={() => handleTabClick('tapAndCollect')}
           >
-            Tap and Collect {tapAndCollectOrderCount > 0 && !viewedNotifications.tapAndCollect && (
-              <span style={styles.badge}>{tapAndCollectOrderCount}</span>
+            Tap and Collect{' '}
+            {undeliveredCounts.tapAndCollect > 0 && (
+              <span style={styles.badge}>{undeliveredCounts.tapAndCollect}</span>
             )}
           </li>
           <li
             style={{
               ...styles.menuItem,
               backgroundColor: activeTab === 'reservations' ? 'white' : '#444',
-              color: activeTab === 'reservations' ? 'black' : 'white'
+              color: activeTab === 'reservations' ? 'black' : 'white',
             }}
             onClick={() => handleTabClick('reservations')}
           >
-            Reservations {reservationCount > 0 && !viewedNotifications.reservations && (
-              <span style={styles.badge}>{reservationCount}</span>
-            )}
+            Reservations
           </li>
         </ul>
       </div>
 
 
+      
+      
  <div style={styles.tablesSection}>
  {activeTab !== 'tapAndCollect' && (
  <>
@@ -505,11 +490,27 @@ const AdminDashboard = () => {
 // Styles
 const styles = {
  container: { display: 'flex', height: '100vh' },
- sidebar: { width: '20%', backgroundColor: '#333', color: 'white', padding: '20px' },
- header: { fontSize: '24px', marginBottom: '20px' },
- menuList: { listStyleType: 'none', padding: '0' },
- menuItem: { padding: '10px', margin: '5px 0', cursor: 'pointer', textAlign: 'center', borderRadius: '4px', position: 'relative' },
- badge: { position: 'absolute', top: '5px', right: '15px', backgroundColor: 'red', color: 'white', borderRadius: '50%', padding: '5px 8px', fontSize: '12px' },
+  sidebar: { width: '20%', backgroundColor: '#333', color: 'white', padding: '20px' },
+  header: { fontSize: '24px', marginBottom: '20px' },
+  menuList: { listStyleType: 'none', padding: '0' },
+  menuItem: {
+    padding: '10px',
+    margin: '5px 0',
+    cursor: 'pointer',
+    textAlign: 'center',
+    borderRadius: '4px',
+    position: 'relative',
+  },
+  badge: {
+    backgroundColor: 'red',
+    color: 'white',
+    borderRadius: '50%',
+    padding: '5px 10px',
+    fontSize: '12px',
+    position: 'absolute',
+    top: '10px',
+    right: '20px',
+  },
  tablesSection: { width: '20%', padding: '20px' },
  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' },
  tableBox: { padding: '20px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#ddd', borderRadius: '4px' },
@@ -527,7 +528,3 @@ const styles = {
  deliverButton: { padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }
 };
 export default AdminDashboard;
-
-
-
-
