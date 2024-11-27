@@ -19,6 +19,9 @@ const AdminDashboard = () => {
     tapAndCollect: 0,
   });
 
+  // To track new orders
+  const [previousOrdersLength, setPreviousOrdersLength] = useState(0);
+
   useEffect(() => {
     const getOrdersQuery = () => {
       const ordersRef = collection(db, 'orders');
@@ -54,6 +57,12 @@ const AdminDashboard = () => {
 
       setOrders(ordersList);
 
+      // Play notification sound if new orders arrive
+      if (ordersList.length > previousOrdersLength) {
+        playNotificationSound();
+        setPreviousOrdersLength(ordersList.length);
+      }
+
       const newTapCollectTokens = {};
       ordersList.forEach((order) => {
         if (!tapCollectTokenMap[order.id] && order.tableNumber === 0) {
@@ -87,7 +96,14 @@ const AdminDashboard = () => {
     });
 
     return () => unsubscribe();
-  }, [timeRange, tapCollectTokenMap]);
+  }, [timeRange, tapCollectTokenMap, previousOrdersLength]);
+
+  const playNotificationSound = () => {
+    const audio = new Audio('/iphone.mp3'); // Path to the audio file in public folder
+    audio
+      .play()
+      .catch((error) => console.error('Error playing notification sound:', error));
+  };
 
   useEffect(() => {
     const orderCountMap = {};
@@ -154,10 +170,9 @@ const AdminDashboard = () => {
   };
 
   const isTableAllDelivered = (tableNumber) => {
-  const ordersForTable = orders.filter((order) => order.tableNumber === tableNumber);
-  return ordersForTable.every((order) => order.isDelivered);
-};
-
+    const ordersForTable = orders.filter((order) => order.tableNumber === tableNumber);
+    return ordersForTable.every((order) => order.isDelivered);
+  };
 
   const handleTimeRangeChange = (event) => {
     setTimeRange(event.target.value);
